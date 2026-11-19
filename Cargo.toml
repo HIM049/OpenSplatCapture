@@ -1,0 +1,52 @@
+[package]
+name = "open_capture"
+version = "0.2.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+capture_format = { path = "crates/capture_format" }
+bevy = { workspace = true, features = ["3d", "ui", "ui_picking", "android-native-activity"] }
+bevy_mod_openxr = { workspace = true, features = ["window_support"] }
+bevy_mod_xr = { workspace = true }
+openxr = { workspace = true }
+ash = { workspace = true }
+wgpu = { workspace = true }
+wgpu-hal = { workspace = true }
+rust-i18n = { workspace = true }
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = { workspace = true }
+ndk-context = { workspace = true }
+libc = { workspace = true }
+
+[workspace]
+resolver = "2"
+members = ["crates/capture_format"]
+
+[workspace.dependencies]
+bevy = { version = "0.19", default-features = false }
+bevy_mod_openxr = "0.6"
+bevy_mod_xr = "0.6"
+openxr = "0.21.1"
+ash = "0.38"
+wgpu = "29"
+wgpu-hal = "29"
+jni = "0.20"
+ndk-context = "0.1"
+libc = "0.2"
+flate2 = "1.1"
+rust-i18n = "4"
+
+[profile.dev]
+opt-level = 1
+strip = "debuginfo"
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+opt-level = 3

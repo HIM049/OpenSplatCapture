@@ -1,0 +1,8 @@
+[package]
+name = "capture_format"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+flate2 = { workspace = true }

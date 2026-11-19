@@ -68,8 +68,9 @@ const ICON_FONT: &[u8] = include_bytes!("../assets/fonts/MaterialIconsOutlined.o
 const ICON_HOME: char = '\u{e88a}';
 const ICON_RECORDINGS: char = '\u{e04a}';
 const ICON_SETTINGS: char = '\u{e8b8}';
+const ICON_ABOUT: char = '\u{e88e}';
 
-const SURFACE: Color = Color::srgb(0.23, 0.23, 0.23);
+const SURFACE: Color = Color::srgb(0.18, 0.18, 0.18);
 const RAIL: Color = Color::srgb(0.34, 0.34, 0.34);
 const RAISED: Color = Color::srgb(0.3, 0.3, 0.3);
 const CARD: Color = Color::srgb(0.47, 0.47, 0.47);
@@ -147,6 +148,7 @@ enum Tab {
     Home,
     Recordings,
     Settings,
+    About,
 }
 
 /// 界面语言。
@@ -462,7 +464,7 @@ fn spawn_surface(
         .spawn((
             Camera2d,
             Camera { order, ..default() },
-            Msaa::Off,
+            Msaa::Sample4,
             render_target,
         ))
         .id();
@@ -545,6 +547,7 @@ fn setup(
                     (Tab::Home, ICON_HOME),
                     (Tab::Recordings, ICON_RECORDINGS),
                     (Tab::Settings, ICON_SETTINGS),
+                    (Tab::About, ICON_ABOUT),
                 ] {
                     let node = Node {
                         width: px(76.0),
@@ -572,6 +575,7 @@ fn setup(
                 spawn_home(content);
                 spawn_recordings(content);
                 spawn_settings(content);
+                spawn_about(content);
             });
         });
     commands.insert_resource(Panel {
@@ -861,6 +865,50 @@ fn spawn_recordings(content: &mut ChildSpawnerCommands) {
             Dyn::LastStop,
             Layout::HideEmpty,
         ));
+    });
+}
+
+/// 关于页：软件名称、版本、项目地址和字体许可。
+fn spawn_about(content: &mut ChildSpawnerCommands) {
+    content.spawn(page(Tab::About)).with_children(|page| {
+        page.spawn(label("Open Splat Capture", 44.0, FontWeight::BOLD, TEXT));
+        page.spawn((
+            label(
+                concat!("v", env!("CARGO_PKG_VERSION")),
+                24.0,
+                FontWeight::NORMAL,
+                DIM_TEXT,
+            ),
+            Node {
+                margin: UiRect::top(px(8.0)),
+                ..default()
+            },
+        ));
+        page.spawn((
+            label(
+                "github.com/HIM049/OpenSplatCapture",
+                22.0,
+                FontWeight::NORMAL,
+                TEXT,
+            ),
+            Node {
+                margin: UiRect::top(px(24.0)),
+                ..default()
+            },
+        ));
+        page.spawn(Node {
+            margin: UiRect::top(px(40.0)),
+            ..column(6.0)
+        })
+        .with_children(|fonts| {
+            fonts.spawn(tr("about.fonts", 26.0, FontWeight::BOLD, TEXT));
+            for line in [
+                "Noto Sans SC · SIL Open Font License 1.1",
+                "Material Icons · Apache License 2.0",
+            ] {
+                fonts.spawn(label(line, 20.0, FontWeight::NORMAL, DIM_TEXT));
+            }
+        });
     });
 }
 

@@ -41,12 +41,16 @@ fn main() {
                 EnvironmentBlendMode::ALPHA_BLEND,
                 EnvironmentBlendMode::OPAQUE,
             ],
+            // 每只眼睛约为推荐分辨率（1680x1760）的 1.1 和 1.2 倍，取最后一个不超过运行时上限的。
+            resolutions: Some(vec![UVec2::new(1848, 1936), UVec2::new(2016, 2112)]),
             ..default()
         })
         .insert_resource(ClearColor(Color::NONE))
         .add_plugins(add_xr_plugins(DefaultPlugins).set(OxrInitPlugin { exts, ..default() }))
         // XR 相机逐个网格直接绘制，不使用间接绘制。
         .register_required_components::<XrCamera, NoIndirectDrawing>()
+        // XR 相机不做多重采样抗锯齿。
+        .register_required_components_with::<XrCamera, Msaa>(|| Msaa::Off)
         .add_plugins((
             time::TimePlugin,
             input::InputPlugin,

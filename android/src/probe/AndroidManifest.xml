@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 探测程序的清单：同时声明 PICO 和 Quest 的元数据，所有硬件功能都不设为必需，两种头显都能安装。 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature android:name="android.hardware.vr.headtracking" android:required="false" android:version="1" />
+    <uses-feature android:name="android.hardware.vulkan.version" android:required="false" android:version="0x400003" />
+    <uses-feature android:name="com.oculus.feature.PASSTHROUGH" android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.faketouch" android:required="false" />
+
+    <uses-permission android:name="com.picovr.permission.SPATIAL_DATA" />
+    <uses-permission android:name="com.oculus.permission.USE_SCENE" />
+    <uses-permission android:name="horizonos.permission.HEADSET_CAMERA" />
+
+    <application android:label="Open Splat Capture Probe">
+        <meta-data android:name="pvr.app.type" android:value="vr" />
+        <meta-data android:name="com.oculus.intent.category.VR" android:value="vr_only" />
+
+        <activity
+            android:name="android.app.NativeActivity"
+            android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|uiMode"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape">
+            <meta-data android:name="android.app.lib_name" android:value="open_capture_probe" />
+            <meta-data android:name="com.oculus.vr.focusaware" android:value="true" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="com.oculus.intent.category.VR" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

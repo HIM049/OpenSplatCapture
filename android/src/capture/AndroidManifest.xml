@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 拍摄程序的清单，和 main 里的共用部分合并；包名、SDK 版本和版本号在 build.gradle.kts 里设定。 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature android:name="android.hardware.vr.headtracking" android:required="true" android:version="1" />
+    <uses-feature android:name="android.hardware.vulkan.version" android:required="true" android:version="0x400003" />
+    <uses-feature android:name="com.oculus.feature.PASSTHROUGH" android:required="true" />
+    <uses-feature android:name="com.oculus.feature.BOUNDARYLESS_APP" android:required="true" />
+
+    <uses-permission android:name="com.oculus.permission.USE_SCENE" />
+    <uses-permission android:name="com.oculus.permission.USE_ANCHOR_API" />
+    <uses-permission android:name="horizonos.permission.HEADSET_CAMERA" />
+
+    <application android:label="Open Splat Capture">
+        <meta-data android:name="com.oculus.supportedDevices" android:value="quest3|quest3s" />
+        <meta-data android:name="com.oculus.intent.category.VR" android:value="vr_only" />
+
+        <activity
+            android:name="android.app.NativeActivity"
+            android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|uiMode"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape">
+            <meta-data android:name="android.app.lib_name" android:value="open_capture" />
+            <meta-data android:name="com.oculus.vr.focusaware" android:value="true" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="com.oculus.intent.category.VR" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

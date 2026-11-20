@@ -4062,6 +4062,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "open_capture_probe"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_mod_openxr",
+ "bevy_mod_xr",
+ "jni 0.20.0",
+ "libc",
+ "ndk-context",
+ "openxr",
+]
+
+[[package]]
 name = "openxr"
 version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

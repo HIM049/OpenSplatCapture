@@ -25,7 +25,7 @@ libc = { workspace = true }
 
 [workspace]
 resolver = "2"
-members = ["crates/capture_format"]
+members = ["crates/capture_format", "probe"]
 
 [workspace.dependencies]
 bevy = { version = "0.19", default-features = false }

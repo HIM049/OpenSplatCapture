@@ -1,0 +1,19 @@
+[package]
+name = "open_capture_probe"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+bevy = { workspace = true, features = ["3d", "ui", "android-native-activity"] }
+bevy_mod_openxr = { workspace = true, features = ["window_support"] }
+bevy_mod_xr = { workspace = true }
+openxr = { workspace = true }
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = { workspace = true }
+ndk-context = { workspace = true }
+libc = { workspace = true }

@@ -21,7 +21,7 @@ use crate::{
     recorder::{CaptureCameraAt, RecordingStarted, RecordingStopped, SessionPaused},
 };
 
-const CAPTURE_CLASS: &str = "com.example.opencapture.CameraCapture";
+const CAPTURE_CLASS: &str = "io.github.him049.opensplatcapture.CameraCapture";
 /// 压缩存储时相机帧的 JPEG 质量。
 const JPEG_QUALITY: i32 = 95;
 

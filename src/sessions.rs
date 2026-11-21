@@ -18,7 +18,7 @@ use crate::{
     recorder::{Recorder, RecorderSystems, RecordingStopped, recordings_root},
 };
 
-const EXPORTER_CLASS: &str = "com.example.opencapture.Exporter";
+const EXPORTER_CLASS: &str = "io.github.him049.opensplatcapture.Exporter";
 const EXPORT_POLL_INTERVAL: Duration = Duration::from_millis(500);
 /// 录制停止后等写盘线程收尾再重新扫描。
 const RESCAN_DELAY: Duration = Duration::from_secs(1);

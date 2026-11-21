@@ -1,4 +1,4 @@
-package com.example.opencapture;
+package io.github.him049.opensplatcapture;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -15,7 +15,7 @@ import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-/** 在后台线程把一个会话目录压成 zip，经媒体库写到 Download/OpenCapture/。 */
+/** 在后台线程把一个会话目录压成 zip，经媒体库写到 Download/OpenSplatCapture/。 */
 public final class Exporter {
     public static final int IDLE = 0;
     public static final int RUNNING = 1;
@@ -65,7 +65,7 @@ public final class Exporter {
             ContentValues values = new ContentValues();
             values.put(MediaStore.MediaColumns.DISPLAY_NAME, zipName);
             values.put(MediaStore.MediaColumns.MIME_TYPE, "application/zip");
-            values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Download/OpenCapture");
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Download/OpenSplatCapture");
             values.put(MediaStore.MediaColumns.IS_PENDING, 1);
             uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
             if (uri == null) {
@@ -101,7 +101,7 @@ public final class Exporter {
             synchronized (lock) {
                 state = DONE;
                 percent = 100;
-                message = "Download/OpenCapture/" + zipName;
+                message = "Download/OpenSplatCapture/" + zipName;
             }
         } catch (Exception e) {
             if (uri != null) {

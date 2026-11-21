@@ -23,7 +23,7 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:screenOrientation="landscape">
-            <meta-data android:name="android.app.lib_name" android:value="open_capture" />
+            <meta-data android:name="android.app.lib_name" android:value="open_splat_capture" />
             <meta-data android:name="com.oculus.vr.focusaware" android:value="true" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

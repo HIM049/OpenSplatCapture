@@ -65,7 +65,7 @@ for (profile in listOf("debug", "release")) {
         workingDir = cargoRoot
         val output = layout.buildDirectory.dir("rust/$profile").get().asFile
         commandLine(
-            listOf("cargo", "ndk", "-t", "arm64-v8a", "-P", "29", "-o", output.path, "build", "-p", "open_capture", "--lib") +
+            listOf("cargo", "ndk", "-t", "arm64-v8a", "-P", "29", "-o", output.path, "build", "-p", "open_splat_capture", "--lib") +
                 if (profile == "release") listOf("--release") else emptyList()
         )
         doFirst { environment("ANDROID_NDK_HOME", android.ndkDirectory.path) }

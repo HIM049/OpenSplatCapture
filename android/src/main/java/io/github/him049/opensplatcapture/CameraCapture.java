@@ -1,4 +1,4 @@
-package com.example.opencapture;
+package io.github.him049.opensplatcapture;
 
 import android.content.Context;
 import android.graphics.ImageFormat;

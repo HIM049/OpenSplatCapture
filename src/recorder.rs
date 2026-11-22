@@ -33,11 +33,10 @@ use crate::{
 
 /// 写盘队列的容量，满了之后新任务被丢弃并计数。
 const WRITE_QUEUE_CAPACITY: usize = 512;
-use crate::tuning::MIN_CAPTURE_FPS;
 use crate::tuning::{
-    ADVANCE_HOLD, DEFAULT_CAPTURE_FPS, DEPTH_INTERVAL, HOLD_CAPTURE_FPS, HOLD_MAX_ANGULAR_SPEED,
-    HOLD_MAX_LINEAR_SPEED, INDICATOR_DISTANCE, INDICATOR_PITCH, INDICATOR_RADIUS, INDICATOR_YAW,
-    LONG_PRESS, MIN_SHOT_INTERVAL, SCAN_STAGE_DEPTH_INTERVAL,
+    ADVANCE_HOLD, DEPTH_INTERVAL, HOLD_CAPTURE_FPS, HOLD_MAX_ANGULAR_SPEED, HOLD_MAX_LINEAR_SPEED,
+    INDICATOR_DISTANCE, INDICATOR_PITCH, INDICATOR_RADIUS, INDICATOR_YAW, LONG_PRESS,
+    MIN_SHOT_INTERVAL, SCAN_STAGE_DEPTH_INTERVAL,
 };
 /// 录制开始后先只记位姿，过这么久再发第一个采集节拍，保证每帧图像前后都有位姿。
 const FIRST_TICK_DELAY: Duration = Duration::from_millis(200);
@@ -108,17 +107,7 @@ pub struct AdvanceStage;
 #[derive(Message)]
 pub struct CancelRecording;
 
-/// 照片的触发方式。
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
-pub enum CaptureMode {
-    /// 由小球引导，手动拍一张或按住侧键连续拍。
-    #[default]
-    ByPose,
-    /// 按固定帧率拍。
-    Timed,
-}
-
-/// 按位姿录制的三个阶段：扫描房间定出表面点，按小球拍摄，隐藏小球扫细节。
+/// 录制的三个阶段：扫描房间定出表面点，按小球拍摄，隐藏小球扫细节。
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Stage {
     Scan,
@@ -159,13 +148,10 @@ enum Job {
 
 #[derive(Resource)]
 pub struct Recorder {
-    pub capture_fps: f32,
     pub log_controllers: bool,
     /// 下一次录制使用的存储方式。
     pub storage: Storage,
-    /// 下一次录制使用的触发方式。
-    pub mode: CaptureMode,
-    /// 按位姿录制时用已设定的房间放置小球，否则先扫描房间。
+    /// 用已设定的房间放置小球，否则先扫描房间。
     pub use_room: bool,
     /// 开始前的操作说明正在显示，再确认一次才真正开始。
     pub intro_open: bool,
@@ -205,10 +191,8 @@ pub enum LastStop {
 impl Default for Recorder {
     fn default() -> Self {
         Self {
-            capture_fps: DEFAULT_CAPTURE_FPS,
             log_controllers: true,
             storage: Storage::default(),
-            mode: CaptureMode::default(),
             use_room: true,
             intro_open: false,
             start_blocked: false,
@@ -247,7 +231,6 @@ pub struct ActiveRecording {
     pub dir: PathBuf,
     pub time: TimeBase,
     pub storage: Storage,
-    pub mode: CaptureMode,
     pub stage: Stage,
     /// 头部动得太快，连续拍摄在等待。
     pub too_fast: bool,
@@ -468,7 +451,7 @@ fn handle_record_key(
     }
 }
 
-/// 开始或结束录制。按位姿录制时，选了已设定的房间却没有可用数据就不开始；
+/// 开始或结束录制。选了已设定的房间却没有可用数据就不开始；
 /// 否则先显示操作说明，再确认一次才开始。
 fn toggle_recording(
     mut toggles: MessageReader<ToggleRecording>,
@@ -486,14 +469,13 @@ fn toggle_recording(
         haptics.write(Haptic::Record);
         return;
     }
-    let by_pose = recorder.mode == CaptureMode::ByPose;
-    if by_pose && recorder.use_room && !room.usable() {
+    if recorder.use_room && !room.usable() {
         recorder.start_blocked = true;
         haptics.write(Haptic::Stage);
         return;
     }
     recorder.start_blocked = false;
-    if by_pose && !recorder.intro_open {
+    if !recorder.intro_open {
         recorder.intro_open = true;
         haptics.write(Haptic::Stage);
         return;
@@ -527,11 +509,7 @@ fn toggle_recording(
     }
     let time = new_time_base();
     let storage = recorder.storage;
-    let mode = recorder.mode;
-    info!(
-        "recorder: started {} ({storage:?}, {mode:?})",
-        dir.display()
-    );
+    info!("recorder: started {} ({storage:?})", dir.display());
     haptics.write(Haptic::Record);
     started.write(RecordingStarted {
         dir: dir.clone(),
@@ -542,7 +520,6 @@ fn toggle_recording(
         dir,
         time,
         storage,
-        mode,
         stage: Stage::Scan,
         too_fast: false,
         gate: ShotGate::default(),
@@ -595,10 +572,10 @@ fn control_stages(
     if !advance {
         return;
     }
-    let next = match (active.mode, active.stage) {
-        (CaptureMode::ByPose, Stage::Scan) => Some(Stage::Detail),
-        (CaptureMode::ByPose, Stage::Detail) => Some(Stage::Free),
-        _ => None,
+    let next = match active.stage {
+        Stage::Scan => Some(Stage::Detail),
+        Stage::Detail => Some(Stage::Free),
+        Stage::Free => None,
     };
     match next {
         Some(stage) => {
@@ -613,8 +590,8 @@ fn control_stages(
     }
 }
 
-/// 录制期间决定这一帧要不要拍照：定时方式按帧率；按位姿方式在扫描阶段不拍照，
-/// 之后手动拍一张，或握住侧键时在头部不太快的情况下按固定帧率连续拍。
+/// 录制期间决定这一帧要不要拍照：扫描阶段不拍照，之后手动拍一张，
+/// 或握住侧键时在头部不太快的情况下按固定帧率连续拍。
 /// 不拍照时按较低的频率请求一帧只用于发现表面的深度。
 fn emit_capture_ticks(
     mut recorder: ResMut<Recorder>,
@@ -628,7 +605,6 @@ fn emit_capture_ticks(
     mut haptics: MessageWriter<Haptic>,
 ) {
     let manual = manual.read().count() > 0;
-    let interval = Duration::from_secs_f32(1.0 / recorder.capture_fps.max(MIN_CAPTURE_FPS));
     let Some(active) = &mut recorder.active else {
         return;
     };
@@ -636,13 +612,12 @@ fn emit_capture_ticks(
     if now - active.started < FIRST_TICK_DELAY {
         return;
     }
-    let shoot = match active.mode {
-        CaptureMode::Timed => active.last_shot.is_none_or(|last| now - last >= interval),
-        CaptureMode::ByPose if active.stage == Stage::Scan => {
+    let shoot = match active.stage {
+        Stage::Scan => {
             active.too_fast = false;
             false
         }
-        CaptureMode::ByPose => {
+        Stage::Detail | Stage::Free => {
             let time = active.started.elapsed().as_secs_f64();
             let head = match (&instance, &base, &view) {
                 (Some(instance), Some(base), Some(view)) => head_transform(instance, base, view),
@@ -684,12 +659,10 @@ fn emit_capture_ticks(
         active.last_depth = now;
         active.ticks += 1;
         ticks.write(CaptureTick);
-        if active.mode == CaptureMode::ByPose {
-            haptics.write(Haptic::Shot);
-        }
+        haptics.write(Haptic::Shot);
         return;
     }
-    let scan_interval = if active.mode == CaptureMode::ByPose && active.stage == Stage::Scan {
+    let scan_interval = if active.stage == Stage::Scan {
         SCAN_STAGE_DEPTH_INTERVAL
     } else {
         DEPTH_INTERVAL
@@ -775,7 +748,6 @@ fn update_indicator(
 ) {
     let color = match &recorder.active {
         None => IDLE_COLOR,
-        Some(active) if active.mode == CaptureMode::Timed => RECORDING_COLOR,
         Some(active)
             if active
                 .last_shot

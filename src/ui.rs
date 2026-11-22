@@ -27,8 +27,8 @@ use crate::{
     pose::{ViewSpace, head_transform},
     preview::{Coverage, DetailCloud},
     recorder::{
-        AdvanceStage, CancelRecording, CaptureMode, LastStop, Recorder, RecordingStarted, Stage,
-        StopReason, free_bytes, recordings_root,
+        AdvanceStage, CancelRecording, LastStop, Recorder, RecordingStarted, Stage, StopReason,
+        free_bytes, recordings_root,
     },
     room::{MissingReason, RequestRoomSetup, RoomSetup, RoomStatus, SetupNote},
     sessions::{ExportStatus, SessionCommand, Sessions},
@@ -58,8 +58,6 @@ const POINTER_ID: PointerId =
     PointerId::Custom(Uuid::from_u128(0x6f70_656e_5f63_6170_7475_7265_7569_0001));
 const LEFT_POINTER_ID: PointerId =
     PointerId::Custom(Uuid::from_u128(0x6f70_656e_5f63_6170_7475_7265_7569_0002));
-/// 定时拍摄可选的帧率和它们的显示文字。
-const RATES: [(u8, &str); 5] = [(1, "1"), (2, "2"), (3, "3"), (5, "5"), (10, "10")];
 
 /// 正文字体（中英文共用）和 Material Icons 图标字体。
 const TEXT_FONT: &[u8] = include_bytes!("../assets/fonts/NotoSansSC.ttf");
@@ -172,8 +170,6 @@ impl Language {
 #[derive(Clone, Copy, PartialEq, Debug)]
 enum SettingValue {
     Language(Language),
-    Mode(CaptureMode),
-    Rate(u8),
     Storage(Storage),
 }
 
@@ -278,7 +274,6 @@ struct Tr(&'static str);
 enum Dyn {
     HomeWarning,
     RoomSubtitle,
-    TimedNote,
     RecordingNote,
     StartLabel,
     FreeSpace,
@@ -318,9 +313,6 @@ enum Ink {
 #[derive(Component, Clone, Copy)]
 enum Layout {
     Page(Tab),
-    ModeRow(CaptureMode),
-    HomeCards,
-    TimedNote,
     SetupRoom,
     /// 文字为空时隐藏。
     HideEmpty,
@@ -727,13 +719,10 @@ fn spawn_home(content: &mut ChildSpawnerCommands) {
                 ..default()
             },
         ));
-        page.spawn((
-            Node {
-                margin: UiRect::top(px(28.0)),
-                ..column(16.0)
-            },
-            Layout::HomeCards,
-        ))
+        page.spawn(Node {
+            margin: UiRect::top(px(28.0)),
+            ..column(16.0)
+        })
         .with_children(|cards| {
             for room in [true, false] {
                 let node = Node {
@@ -786,15 +775,6 @@ fn spawn_home(content: &mut ChildSpawnerCommands) {
                     });
             }
         });
-        page.spawn((
-            label("", 24.0, FontWeight::NORMAL, DIM_TEXT),
-            Dyn::TimedNote,
-            Layout::TimedNote,
-            Node {
-                margin: UiRect::top(px(28.0)),
-                ..default()
-            },
-        ));
         page.spawn(spacer());
         page.spawn((
             label("", 22.0, FontWeight::NORMAL, DIM_TEXT),
@@ -921,85 +901,47 @@ fn spawn_settings(content: &mut ChildSpawnerCommands) {
             ..column(4.0)
         })
         .with_children(|rows| {
-            setting_row(rows, "settings.language", "settings.language.desc", None).with_children(
-                |row| {
-                    segments(
-                        row,
-                        &[
-                            (
-                                SettingValue::Language(Language::English),
-                                Caption::Fixed("English"),
-                            ),
-                            (
-                                SettingValue::Language(Language::Chinese),
-                                Caption::Fixed("中文"),
-                            ),
-                        ],
-                    );
-                },
-            );
-            setting_row(rows, "settings.mode", "settings.mode.desc", None).with_children(|row| {
+            setting_row(rows, "settings.language", "settings.language.desc").with_children(|row| {
                 segments(
                     row,
                     &[
                         (
-                            SettingValue::Mode(CaptureMode::ByPose),
-                            Caption::Key("settings.mode.by_pose"),
+                            SettingValue::Language(Language::English),
+                            Caption::Fixed("English"),
                         ),
                         (
-                            SettingValue::Mode(CaptureMode::Timed),
-                            Caption::Key("settings.mode.timed"),
+                            SettingValue::Language(Language::Chinese),
+                            Caption::Fixed("中文"),
                         ),
                     ],
                 );
             });
-            setting_row(
-                rows,
-                "settings.rate",
-                "settings.rate.desc",
-                Some(CaptureMode::Timed),
-            )
-            .with_children(|row| {
-                let options: Vec<_> = RATES
-                    .iter()
-                    .map(|&(rate, text)| (SettingValue::Rate(rate), Caption::Fixed(text)))
-                    .collect();
-                segments(row, &options);
+            setting_row(rows, "settings.storage", "settings.storage.desc").with_children(|row| {
+                segments(
+                    row,
+                    &[
+                        (
+                            SettingValue::Storage(Storage::Compressed),
+                            Caption::Fixed("JPEG"),
+                        ),
+                        (
+                            SettingValue::Storage(Storage::Raw),
+                            Caption::Key("settings.storage.raw"),
+                        ),
+                    ],
+                );
             });
-            setting_row(rows, "settings.storage", "settings.storage.desc", None).with_children(
-                |row| {
-                    segments(
-                        row,
-                        &[
-                            (
-                                SettingValue::Storage(Storage::Compressed),
-                                Caption::Fixed("JPEG"),
-                            ),
-                            (
-                                SettingValue::Storage(Storage::Raw),
-                                Caption::Key("settings.storage.raw"),
-                            ),
-                        ],
-                    );
-                },
-            );
-            setting_row(
-                rows,
-                "settings.controllers",
-                "settings.controllers.desc",
-                None,
-            )
-            .with_children(|row| switch(row, SwitchSetting::Controllers));
+            setting_row(rows, "settings.controllers", "settings.controllers.desc")
+                .with_children(|row| switch(row, SwitchSetting::Controllers));
         });
     });
 }
 
-/// 一行设置的名称和说明；`mode` 指定时只在该拍摄方式下显示。
+/// 一行设置的名称和说明。
 fn setting_row<'a>(
     rows: &'a mut ChildSpawnerCommands,
     title: &'static str,
     description: &'static str,
-    mode: Option<CaptureMode>,
 ) -> EntityCommands<'a> {
     let mut row = rows.spawn(Node {
         flex_direction: FlexDirection::Row,
@@ -1008,9 +950,6 @@ fn setting_row<'a>(
         padding: UiRect::axes(px(4.0), px(12.0)),
         ..default()
     });
-    if let Some(mode) = mode {
-        row.insert(Layout::ModeRow(mode));
-    }
     row.with_children(|row| {
         row.spawn(Node {
             flex_grow: 1.0,
@@ -1382,9 +1321,9 @@ fn draw_pointer_ray(panel: Res<Panel>, rays: Res<PointerRays>, mut gizmos: Gizmo
     }
 }
 
-/// 当前的开始方式能否开始录制：按位姿录制选了已设定的房间时，房间要已找到或正在读取。
+/// 当前的开始方式能否开始录制：选了已设定的房间时，房间要已找到或正在读取。
 fn start_allowed(recorder: &Recorder, room: &RoomSetup) -> bool {
-    recorder.mode == CaptureMode::Timed || !recorder.use_room || room.usable()
+    !recorder.use_room || room.usable()
 }
 
 fn apply_commands(
@@ -1415,8 +1354,6 @@ fn apply_commands(
                     language.0 = *chosen;
                 }
             }
-            UiCommand::Set(SettingValue::Mode(mode)) => recorder.mode = *mode,
-            UiCommand::Set(SettingValue::Rate(rate)) => recorder.capture_fps = f32::from(*rate),
             UiCommand::Set(SettingValue::Storage(storage)) => recorder.storage = *storage,
             UiCommand::Toggle(SwitchSetting::Controllers) => {
                 recorder.log_controllers = !recorder.log_controllers;
@@ -1480,7 +1417,7 @@ fn apply_language(language: Res<UiLanguage>, mut texts: Query<(&Tr, &mut Text)>)
     }
 }
 
-/// 按录制状态组织提示窗的内容：空闲、开始前说明、各个阶段和定时录制。
+/// 按录制状态组织提示窗的内容：空闲、开始前说明和各个阶段。
 fn refresh_hud_view(
     recorder: Res<Recorder>,
     coverage: Res<Coverage>,
@@ -1513,31 +1450,25 @@ fn refresh_hud_view(
         };
         return;
     };
-    let fps = format!("{:.0}", recorder.capture_fps);
-    let (title, hint, tips) = match (active.mode, active.stage) {
-        (CaptureMode::Timed, _) => (
-            t!("hud.timed.title"),
-            t!("hud.timed.hint", fps = fps),
-            t!("hud.timed.tips"),
-        ),
-        (CaptureMode::ByPose, Stage::Scan) => (
+    let (title, hint, tips) = match active.stage {
+        Stage::Scan => (
             t!("hud.step1.title"),
             t!("hud.step1.hint"),
             t!("hud.step1.tips"),
         ),
-        (CaptureMode::ByPose, Stage::Detail) => (
+        Stage::Detail => (
             t!("hud.step2.title"),
             t!("hud.step2.hint"),
             t!("hud.step2.tips"),
         ),
-        (CaptureMode::ByPose, Stage::Free) => (
+        Stage::Free => (
             t!("hud.step3.title"),
             t!("hud.step3.hint"),
             t!("hud.step3.tips"),
         ),
     };
-    let last_step = active.mode == CaptureMode::Timed || active.stage == Stage::Free;
-    let scanning = active.mode == CaptureMode::ByPose && active.stage == Stage::Scan;
+    let last_step = active.stage == Stage::Free;
+    let scanning = active.stage == Stage::Scan;
     let state = if scanning && room.status == RoomStatus::Checking && recorder.use_room {
         Some(t!("hud.state.reading_room"))
     } else if scanning && coverage.too_close() {
@@ -1547,16 +1478,15 @@ fn refresh_hud_view(
     };
     let photos = t!("hud.photos", photos = active.ticks).into_owned();
     let (enough, total) = (coverage.enough(), coverage.total());
-    let (left, right, progress) = match (active.mode, active.stage) {
-        (CaptureMode::Timed, _) => (String::new(), photos, None),
-        (CaptureMode::ByPose, Stage::Scan) => (
+    let (left, right, progress) = match active.stage {
+        Stage::Scan => (
             state
                 .unwrap_or_else(|| t!("hud.points.scan", total = total))
                 .into_owned(),
             String::new(),
             None,
         ),
-        (CaptureMode::ByPose, Stage::Detail) => (
+        Stage::Detail => (
             t!(
                 "hud.points.done",
                 percent = enough * 100 / total.max(1),
@@ -1567,7 +1497,7 @@ fn refresh_hud_view(
             photos,
             Some(enough as f32 / total.max(1) as f32),
         ),
-        (CaptureMode::ByPose, Stage::Free) => (
+        Stage::Free => (
             t!("hud.points.cloud", points = cloud.points()).into_owned(),
             photos,
             None,
@@ -1654,7 +1584,7 @@ fn update_texts(
                 lines.join("\n")
             }
             Dyn::RoomSubtitle => match (&room.status, room.setup_note) {
-                (RoomStatus::Found(count), _) => t!("home.room.found", count = count).into_owned(),
+                (RoomStatus::Found(_), _) => t!("home.room.found").into_owned(),
                 (_, Some(SetupNote::Opening)) => t!("home.room.opening").into_owned(),
                 (_, Some(SetupNote::Failed)) => t!("home.room.open_failed").into_owned(),
                 (RoomStatus::Checking, None) => t!("home.room.checking").into_owned(),
@@ -1663,9 +1593,6 @@ fn update_texts(
                     t!("home.room.missing", reason = missing_reason(*reason)).into_owned()
                 }
             },
-            Dyn::TimedNote => {
-                t!("home.timed", fps = format!("{:.0}", recorder.capture_fps)).into_owned()
-            }
             Dyn::RecordingNote => match &recorder.active {
                 Some(active) => t!(
                     "home.recording",
@@ -1754,8 +1681,6 @@ fn update_texts(
 fn is_selected(value: SettingValue, recorder: &Recorder, language: Language) -> bool {
     match value {
         SettingValue::Language(option) => option == language,
-        SettingValue::Mode(mode) => mode == recorder.mode,
-        SettingValue::Rate(rate) => f32::from(rate) == recorder.capture_fps.round(),
         SettingValue::Storage(storage) => storage == recorder.storage,
     }
 }
@@ -1889,9 +1814,6 @@ fn update_layout(
     for (layout, mut node, text) in &mut nodes {
         match *layout {
             Layout::Page(shown) => set_display(&mut node, shown == tab.0),
-            Layout::ModeRow(mode) => set_display(&mut node, mode == recorder.mode),
-            Layout::HomeCards => set_display(&mut node, recorder.mode == CaptureMode::ByPose),
-            Layout::TimedNote => set_display(&mut node, recorder.mode == CaptureMode::Timed),
             Layout::SetupRoom => {
                 set_display(&mut node, matches!(room.status, RoomStatus::Missing(_)));
             }

@@ -19,8 +19,7 @@ use crate::{
     depth::DepthSystems,
     input::{LeftHandAnchor, RightAimAnchor},
     recorder::{
-        AdvanceStage, CaptureMode, DepthFrameCaptured, Recorder, RecordingStarted,
-        RecordingStopped, Stage,
+        AdvanceStage, DepthFrameCaptured, Recorder, RecordingStarted, RecordingStopped, Stage,
     },
     room::RoomLoaded,
     tuning::{
@@ -179,7 +178,7 @@ fn load_room(
     let scanning = recorder
         .active
         .as_ref()
-        .is_some_and(|active| active.mode == CaptureMode::ByPose && active.stage == Stage::Scan);
+        .is_some_and(|active| active.stage == Stage::Scan);
     if !scanning || coverage.map.frozen() {
         return;
     }
@@ -199,7 +198,7 @@ fn finalize_after_scan(recorder: Res<Recorder>, mut coverage: ResMut<Coverage>) 
     let capturing = recorder
         .active
         .as_ref()
-        .is_some_and(|active| active.mode == CaptureMode::ByPose && active.stage != Stage::Scan);
+        .is_some_and(|active| active.stage != Stage::Scan);
     if !capturing || coverage.map.frozen() {
         return;
     }
@@ -244,7 +243,7 @@ fn in_detail_scan(recorder: &Recorder) -> bool {
     recorder
         .active
         .as_ref()
-        .is_some_and(|active| active.mode == CaptureMode::ByPose && active.stage == Stage::Free)
+        .is_some_and(|active| active.stage == Stage::Free)
 }
 
 /// 手柄的位置，它们附近的深度不算表面。

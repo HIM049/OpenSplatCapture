@@ -19,12 +19,7 @@ pub const CANCEL_CONFIRM: Duration = Duration::from_secs(3);
 /// 连续几次震动之间的间隔。
 pub const PULSE_GAP: Duration = Duration::from_millis(90);
 
-// ---- 定时拍摄 ----
-
-pub const DEFAULT_CAPTURE_FPS: f32 = 3.0;
-pub const MIN_CAPTURE_FPS: f32 = 1.0;
-
-// ---- 按位姿拍摄 ----
+// ---- 拍摄 ----
 
 /// 两次手动拍摄的最小间隔（秒）。
 pub const MIN_SHOT_INTERVAL: f64 = 0.1;

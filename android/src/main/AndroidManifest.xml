@@ -7,6 +7,7 @@
     <uses-feature android:name="android.hardware.vulkan.version" android:required="true" android:version="0x400003" />
     <uses-feature android:name="com.oculus.feature.PASSTHROUGH" android:required="true" />
     <uses-feature android:name="com.oculus.feature.BOUNDARYLESS_APP" android:required="true" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <uses-permission android:name="com.oculus.permission.USE_SCENE" />
     <uses-permission android:name="com.oculus.permission.USE_ANCHOR_API" />
@@ -20,6 +21,7 @@
         <activity
             android:name="android.app.NativeActivity"
             android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|uiMode"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleTask"
             android:screenOrientation="landscape">

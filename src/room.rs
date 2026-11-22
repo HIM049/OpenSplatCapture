@@ -22,7 +22,7 @@ use openxr::{
 use crate::{
     android::{SCENE_PERMISSION, has_permission},
     pose::{ViewSpace, head_transform, locate},
-    recorder::{CaptureMode, Recorder, RecorderSystems, RecordingStarted, Stage},
+    recorder::{Recorder, RecorderSystems, RecordingStarted, Stage},
     tuning::room_settings,
 };
 
@@ -397,7 +397,7 @@ fn request_setup(
     });
 }
 
-/// 按位姿录制选了已设定的房间时，房间找到后用它生成表面点，调试版还把布局和点存进录制；还在查时等查完再生成。
+/// 录制时选了已设定的房间，房间找到后用它生成表面点，调试版还把布局和点存进录制；还在查时等查完再生成。
 fn load_for_recording(
     mut started: MessageReader<RecordingStarted>,
     mut recorder: ResMut<Recorder>,
@@ -409,12 +409,12 @@ fn load_for_recording(
     mut loaded: MessageWriter<RoomLoaded>,
 ) {
     if started.read().count() > 0 {
-        room.wanted = recorder.mode == CaptureMode::ByPose && recorder.use_room;
+        room.wanted = recorder.use_room;
     }
     let scanning = recorder
         .active
         .as_ref()
-        .is_some_and(|active| active.mode == CaptureMode::ByPose && active.stage == Stage::Scan);
+        .is_some_and(|active| active.stage == Stage::Scan);
     if !room.wanted {
         return;
     }

@@ -2,14 +2,20 @@
 
 English | [简体中文](README_CN.md)
 
-A capture APP that run on your headset, to capture data for train 3D Gaussian Splatting.
+<img width="100%" alt="10_3" src="https://github.com/user-attachments/assets/4e2976d6-850e-4f5b-ba11-584e1de89338" />
+<img width="720" alt="1367f27533eaf30a8b16c53910656afb" src="https://github.com/user-attachments/assets/ed1dd9c9-8eef-4d07-8093-89f0ca9a6064" />
 
-It records the headset's camera images together with the headset pose and depth
-with a guiding system to showing which surfaces have been captured from which angles. 
+A capture app for VR headsets that records the data needed to train 3D Gaussian Splatting (3DGS).
 
-This app currently only support Meta Quest3 / 3s. Pico support are still in very early stage.
+It records the headset's camera images along with the pose and depth for every photo, which helps improve COLMAP reconstruction quality.
+A guide system built on the room's surfaces marks which surfaces have been captured, and from which angles.
+
+This app currently only supports Meta Quest 3 / 3S. Pico support is still at a very early stage.
 
 ## Output
+
+In the app, press **Export** on a recording in the recordings list. It is saved as a zip file to `Download/OpenSplatCapture/` on the headset.
+Transfer the file to your computer using a file manager app's wireless transfer, ADB, or any other method, then run the tool below to convert it to COLMAP data.
 
 Download `colmap_export` from the [Releases](https://github.com/HIM049/OpenSplatCapture/releases) page. Unzip an exported recording, then convert it to a COLMAP project:
 
@@ -22,13 +28,11 @@ The output has `images/` and `sparse/0/` (cameras, images and a point cloud fuse
 Recordings also stay compatible with the OpenQuestCapture by running this convert script: `tools/expand_session.py` expands them back to the raw layout for its pipeline.
 
 
-## About development
+## About Development
 
-I'm not an expert in XR or graphics. Much of the code in this app was written by AI agents.
-So not all of this app is my own work.
-Even so, I test every version on a real headset before releasing it.
-  
-If something doesn't work for you, please open an issue.
+This project is a utility built to solve a practical need. Since XR and graphics programming are not my primary tech stack, the core codebase was largely generated with AI assistance. I was primarily responsible for technology selection, solution and architecture design, as well as the UI and design assets.
+
+While it is not a project I developed by my self, every release is reviewed and tested on actual hardware to ensure core workflows remain stable and reliable. If there are some problems you meet, please open an issue.
 
 
 ## Privacy

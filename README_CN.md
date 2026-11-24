@@ -11,6 +11,8 @@
 
 目前仅支持 Meta Quest 3 和 Quest 3S。Pico 支持仍处于非常早期的计划阶段。
 
+通过 [Meta 商店](https://www.meta.com/zh-cn/experiences/open-splat-capture/1375280245676821/) 下载该应用。
+
 
 ## 输出
 

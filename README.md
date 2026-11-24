@@ -12,6 +12,9 @@ A guide system built on the room's surfaces marks which surfaces have been captu
 
 This app currently only supports Meta Quest 3 / 3S. Pico support is still at a very early stage.
 
+Download it throuth [Meta Store](https://www.meta.com/experiences/open-splat-capture/1375280245676821/)
+
+
 ## Output
 
 In the app, press **Export** on a recording in the recordings list. It is saved as a zip file to `Download/OpenSplatCapture/` on the headset.
